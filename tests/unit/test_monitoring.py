@@ -34,6 +34,9 @@ def test_logger_scalars_prefix_and_config() -> None:
 
 
 def test_logger_tensorboard_backend(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    # TensorBoard is an optional backend; skip cleanly when it is not installed
+    # (the logger degrades gracefully and never writes event files in that case).
+    pytest.importorskip("tensorboard")
     logger = RLHFLogger(run_name="t", tensorboard_dir=tmp_path / "tb")
     logger.log_ppo_step(0, {"train/loss": 1.0})
     logger.finish()
