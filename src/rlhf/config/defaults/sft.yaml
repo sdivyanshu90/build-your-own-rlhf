@@ -1,0 +1,10 @@
+# Default supervised fine-tuning hyperparameters (stage 0). Maps onto
+# rlhf.config.schema.SFTConfig.
+model_name_or_path: gpt2
+learning_rate: 2.0e-5
+batch_size: 16
+epochs: 1
+max_length: 512
+max_grad_norm: 1.0
+warmup_steps: 0
+seed: 42
