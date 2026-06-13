@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Gate the release on the full CI passing for this ref.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Semantic release (compute next version + tag)
+        id: semrel
+        run: |
+          npm install -g semantic-release @semantic-release/git @semantic-release/changelog
+          npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to registry
+        if: steps.semrel.outputs.new_release_published == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        if: steps.semrel.outputs.new_release_published == 'true'
+        run: |
+          VERSION=${{ steps.semrel.outputs.new_release_version }}
+          docker build -t ghcr.io/${{ github.repository }}:$VERSION -f infra/Dockerfile .
+          docker push ghcr.io/${{ github.repository }}:$VERSION
+
+      - name: Helm upgrade
+        if: steps.semrel.outputs.new_release_published == 'true'
+        run: |
+          VERSION=${{ steps.semrel.outputs.new_release_version }}
+          helm upgrade --install rlhf-ppo ./infra/helm/rlhf-ppo \
+            --set image.tag=$VERSION --namespace rlhf --create-namespace
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
