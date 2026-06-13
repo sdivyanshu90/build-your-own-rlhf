@@ -1,0 +1,11 @@
+# Default reward-model hyperparameters. Maps onto
+# rlhf.config.schema.RewardModelConfig.
+model_name_or_path: gpt2
+freeze_backbone: true
+learning_rate: 1.0e-5
+batch_size: 32
+epochs: 3
+ensemble_size: 1
+normalize_rewards: true
+max_grad_norm: 1.0
+seed: 42
