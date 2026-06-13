@@ -1,0 +1,11 @@
+{{- if .Values.config.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "rlhf-ppo.fullname" . }}-config
+  labels:
+    {{- include "rlhf-ppo.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    {{- .Values.config.content | nindent 4 }}
+{{- end }}
