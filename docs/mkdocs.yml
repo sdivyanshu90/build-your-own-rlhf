@@ -1,0 +1,62 @@
+site_name: RLHF-PPO
+site_description: Production-grade RLHF pipeline with a from-scratch PPO implementation.
+repo_url: https://github.com/rlhf-ppo/rlhf-ppo
+docs_dir: .
+site_dir: ../site
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+    - scheme: slate
+      primary: indigo
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [../src]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Architecture:
+      - Overview & Threat Model: architecture/overview.md
+      - PPO Algorithm: architecture/ppo_algorithm.md
+      - Reward Model: architecture/reward_model.md
+      - Value Function: architecture/value_function.md
+      - Reference Model: architecture/reference_model.md
+      - Distributed Training: architecture/distributed_training.md
+  - Guides:
+      - Quickstart: guides/quickstart.md
+      - Training Run: guides/training_run.md
+      - Hyperparameter Tuning: guides/hyperparameter_tuning.md
+      - Adding a Reward Signal: guides/adding_reward_signal.md
+      - Deployment: guides/deployment.md
+  - Decision Records:
+      - "ADR-001 PPO over REINFORCE": adr/001-ppo-over-reinforce.md
+      - "ADR-002 Separate value head": adr/002-separate-value-head.md
+      - "ADR-003 Adaptive KL controller": adr/003-kl-controller-adaptive.md
+      - "ADR-004 Reward-model ensemble": adr/004-reward-model-ensemble.md
+  - API Reference: api/index.md
