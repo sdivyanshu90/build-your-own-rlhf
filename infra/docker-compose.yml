@@ -1,0 +1,48 @@
+# Local development stack: training container + TensorBoard + Postgres for
+# preference/audit storage. Not a production deployment (see infra/helm).
+services:
+  trainer:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    image: rlhf-ppo:dev
+    command: ["version"]
+    environment:
+      RLHF_DEVICE: cpu
+      WANDB_MODE: offline
+    volumes:
+      - ../outputs:/app/outputs
+      - hf-cache:/home/rlhf/.cache/huggingface
+    depends_on:
+      - db
+    # GPUs: uncomment to expose host GPUs to the trainer.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  tensorboard:
+    image: tensorflow/tensorflow:latest
+    command: ["tensorboard", "--logdir=/logs", "--host=0.0.0.0", "--port=6006"]
+    ports:
+      - "6006:6006"
+    volumes:
+      - ../outputs/tb:/logs
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: rlhf
+      POSTGRES_PASSWORD: rlhf
+      POSTGRES_DB: rlhf
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  hf-cache:
+  pgdata:
