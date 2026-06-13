@@ -1,0 +1,17 @@
+# Default owners for everything in the repo.
+*                           @rlhf-ppo/maintainers
+
+# Mathematical core — require ML-systems review.
+/src/rlhf/training/ppo/     @rlhf-ppo/ml-systems
+/src/rlhf/models/           @rlhf-ppo/ml-systems
+/src/rlhf/evaluation/       @rlhf-ppo/ml-systems
+
+# Security-sensitive code.
+/src/rlhf/security/         @rlhf-ppo/security
+/.github/workflows/         @rlhf-ppo/security @rlhf-ppo/devops
+
+# Infrastructure.
+/infra/                     @rlhf-ppo/devops
+
+# Documentation.
+/docs/                      @rlhf-ppo/maintainers
