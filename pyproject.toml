@@ -1,0 +1,109 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rlhf-ppo"
+version = "0.1.0"
+description = "Production-grade RLHF pipeline with a from-scratch PPO implementation."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "RLHF-PPO Maintainers" }]
+dependencies = [
+    "torch>=2.2.0",
+    "transformers>=4.40.0,<5.0",
+    "datasets>=2.18.0",
+    "accelerate>=0.29.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "numpy>=1.26.0",
+    "tqdm>=4.66.0",
+    "rich>=13.7.0",
+    "typer>=0.12.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+monitoring = [
+    "wandb>=0.16.0",
+    "tensorboard>=2.16.0",
+]
+dev = [
+    "pytest>=8.1.0",
+    "pytest-cov>=5.0.0",
+    "pytest-xdist>=3.5.0",
+    # Lint/type tools are pinned so CI reproduces the exact checks validated
+    # locally (newer ruff/mypy can introduce rules that flag otherwise-clean code).
+    "ruff==0.12.2",
+    "mypy==1.10.0",
+    "bandit>=1.7.8",
+    "pip-audit>=2.7.3",
+    "types-PyYAML>=6.0",
+    # Docs stack pinned so `mkdocs build --strict` reproduces the validated build
+    # (newer mkdocstrings/griffe can surface new strict docstring warnings).
+    "mkdocs==1.6.1",
+    "mkdocstrings[python]==1.0.4",
+    "mkdocstrings-python==2.0.4",
+    "mkdocs-material==9.7.6",
+]
+
+[project.scripts]
+rlhf = "rlhf.__main__:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rlhf"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "ANN", "S", "B", "C4", "PT", "RUF"]
+ignore = [
+    "ANN401", # allow typing.Any in tightly-scoped metadata fields
+    "S101",   # asserts are allowed (used heavily in tests and shape checks)
+    "N812",   # `import torch.nn.functional as F` is the universal torch idiom
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Domain exception names (RewardHackingDetected, KLDivergenceExceeded) are part
+# of the public spec'd API and intentionally omit the "Error" suffix.
+"src/rlhf/exceptions.py" = ["N818"]
+"tests/*" = ["ANN", "S105", "S106", "S311", "PLR2004"]
+"scripts/*" = ["ANN"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "--cov=rlhf --cov-report=xml --cov-report=term-missing --cov-fail-under=90"
+markers = [
+    "gpu: mark test as requiring GPU (skip with -m 'not gpu')",
+    "slow: mark test as slow (> 60s)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["rlhf"]
+omit = ["tests/*", "scripts/*", "src/rlhf/__main__.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "@(abc\\.)?abstractmethod",
+]
