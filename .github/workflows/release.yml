@@ -1,8 +1,9 @@
 name: Release
 
+# Releases are cut deliberately via manual dispatch, not on every push — this
+# keeps ordinary pushes to main from running (and failing) a release.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
