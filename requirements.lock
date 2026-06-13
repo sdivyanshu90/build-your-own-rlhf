@@ -1,0 +1,37 @@
+# requirements.lock — pip *constraints* lockfile (used in CI via PIP_CONSTRAINT).
+#
+# Purpose: reproduce the exact dependency set the project was validated against,
+# so CI matches local results bit-for-bit:
+#   * mypy --strict  -> 0 errors (newer torch/transformers type stubs are stricter
+#                       and would otherwise flag their own untyped APIs)
+#   * full test suite -> 176 passed, >=93% coverage
+#
+# These are *constraints*: `pip install -e ".[dev]" -c requirements.lock` keeps the
+# permissive ranges in pyproject.toml for end users while locking CI. Bump
+# deliberately (and re-run `mypy` + tests) rather than letting CI float onto
+# bleeding-edge releases.
+
+# --- Core ML stack (stub- and behaviour-sensitive) ---
+torch==2.3.0
+numpy==1.26.4              # torch 2.3 is incompatible with numpy>=2.0
+transformers==4.46.3
+tokenizers==0.20.3
+huggingface-hub==0.36.2
+safetensors==0.4.3
+accelerate==0.25.0
+datasets==4.0.0
+
+# --- Config / validation ---
+pydantic==2.11.2
+pydantic-core==2.33.1
+pydantic-settings==2.14.0
+pyyaml==6.0.1
+
+# --- Monitoring (optional extra; pinned when present) ---
+tensorboard==2.15.1
+
+# --- Tooling (lint / type / test) ---
+ruff==0.12.2
+mypy==1.10.0
+pytest==8.2.2
+pytest-cov==7.1.0
