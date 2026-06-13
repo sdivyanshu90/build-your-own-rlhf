@@ -1,0 +1,12 @@
+apiVersion: v2
+name: rlhf-ppo
+description: A Helm chart for deploying the RLHF-PPO training/serving workload.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+maintainers:
+  - name: RLHF-PPO Maintainers
+keywords:
+  - rlhf
+  - ppo
+  - llm
