@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONHASHSEED: "0"
+  # The test suite vendors its tokenizer (tests/fixtures/gpt2); forbid any
+  # accidental Hugging Face Hub access so CI is fully hermetic.
+  HF_HUB_OFFLINE: "1"
+  TRANSFORMERS_OFFLINE: "1"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: Ruff lint
+        run: ruff check src/ tests/
+      - name: Ruff format check
+        run: ruff format --check src/ tests/
+      - name: Mypy (strict)
+        run: mypy src/
+
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: Unit tests
+        run: pytest tests/unit/ -v --tb=short --no-cov
+
+  test-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: Integration + adversarial tests
+        run: pytest tests/integration/ tests/adversarial/ -v --tb=short -x --no-cov -m "not gpu"
+
+  test-system:
+    # System tests are heavier; run them on a self-hosted GPU runner when present.
+    runs-on: [self-hosted, gpu]
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'run-system-tests') }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -e ".[dev]"
+      - name: System tests
+        run: pytest tests/system/ -v --tb=short --no-cov
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: Coverage gate (>= 90%)
+        # Run the full non-GPU suite (unit + integration + adversarial + system)
+        # so coverage matches what is validated locally and clears the 90% gate.
+        run: pytest -m "not gpu" --cov=rlhf --cov-report=xml --cov-report=term-missing --cov-fail-under=90
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: Build docs (strict)
+        run: mkdocs build --strict -f docs/mkdocs.yml
+
+  build-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t rlhf-ppo:${{ github.sha }} -f infra/Dockerfile .
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: rlhf-ppo:${{ github.sha }}
+          exit-code: "1"
+          severity: HIGH,CRITICAL
