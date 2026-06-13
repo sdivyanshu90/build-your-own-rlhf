@@ -1,0 +1,63 @@
+# Default values for the rlhf-ppo chart.
+
+image:
+  repository: rlhf-ppo
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+# Which pipeline stage this deployment runs (sft | reward | ppo).
+stage: ppo
+configPath: /config/config.yaml
+
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: "4"
+    memory: 32Gi
+    nvidia.com/gpu: 1
+  limits:
+    cpu: "8"
+    memory: 64Gi
+    nvidia.com/gpu: 1
+
+# Run as the non-root user baked into the image (UID 10001).
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop: ["ALL"]
+
+nodeSelector:
+  cloud.google.com/gke-accelerator: nvidia-tesla-a100
+
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+
+# Mounted config (a ConfigMap or Secret keyed by config.yaml).
+config:
+  create: true
+  content: |
+    run_name: rlhf-prod
+    device: cuda
+    output_dir: /workspace/outputs
+    model:
+      model_name_or_path: gpt2
+    reward_model:
+      model_name_or_path: gpt2
+
+persistence:
+  enabled: true
+  storageClass: standard
+  size: 200Gi
+  mountPath: /workspace
+
+env:
+  WANDB_PROJECT: rlhf-ppo
+serviceAccount:
+  create: true
+  name: rlhf-ppo
