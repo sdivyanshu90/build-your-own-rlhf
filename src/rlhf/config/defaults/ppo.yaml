@@ -1,0 +1,47 @@
+# Default PPO hyperparameters. Maps onto rlhf.config.schema.PPOConfig.
+# Override any field via env (RLHF_PPO__CLIP_EPS=0.1) or a run-specific YAML.
+
+# --- Core surrogate objective ---
+clip_eps: 0.2
+clip_eps_vf: 0.2
+entropy_coeff: 0.01
+value_coeff: 0.5
+gamma: 1.0
+lam: 0.95
+
+# --- Training loop sizing ---
+total_steps: 1000
+rollout_batch_size: 64
+ppo_epochs: 4
+mini_batch_size: 8
+max_grad_norm: 1.0
+gradient_accumulation_steps: 1
+
+# --- KL control ---
+kl_target: 6.0
+kl_init: 0.2
+kl_min: 0.05
+kl_max: 0.5
+kl_step_size: 0.1
+kl_adaptive: true
+kl_abort_threshold: 30.0
+
+# --- Generation ---
+max_new_tokens: 256
+temperature: 1.0
+top_p: 1.0
+top_k: 0
+repetition_penalty: 1.0
+
+# --- Safety / early stopping ---
+reward_hacking_threshold: 0.5
+
+# --- Optimization ---
+learning_rate: 1.4e-5
+lr_scheduler: cosine
+warmup_steps: 100
+
+# --- Infrastructure ---
+eval_every: 50
+save_every: 100
+seed: 42
